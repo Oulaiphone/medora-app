@@ -4,9 +4,11 @@ import { Alert, Platform, View } from 'react-native';
 import { Avatar, Btn, Card, Choice, KV, Over, PageTitle, Row, Screen, T, Toggle, TopBar, toast } from '@/components/ui';
 import { age, shortDate } from '@/lib/dates';
 import { rescheduleAll } from '@/lib/notifications';
+import { printPlan } from '@/lib/printPlan';
 import { useStore } from '@/lib/store';
 import { sharingConfigured, useSession } from '@/lib/supabase';
 import { signOut } from '@/lib/sync';
+import { useSyncStatus } from '@/lib/syncStatus';
 import { C } from '@/lib/theme';
 import type { Settings } from '@/lib/types';
 
@@ -20,6 +22,8 @@ export default function Profile() {
   const setSettings = useStore((s) => s.setSettings);
   const resetAll = useStore((s) => s.resetAll);
   const session = useSession();
+  const sync = useSyncStatus();
+  const meds = useStore((s) => s.meds);
   const yrs = age(profile.dob);
   const demo = settings.mode === 'demo';
 
@@ -86,6 +90,8 @@ export default function Profile() {
           onPress={() => router.navigate('/care')}
         />
         <Row icon="share" title="Export or share" sub="Create a PDF medication summary" onPress={() => router.push('/share')} />
+        <Row icon="printer" title="Print my medication plan" sub="Paper backup for the fridge or wallet" onPress={() => void printPlan(profile, meds).catch(() => toast('Printing is not available.'))} />
+        <Row icon={sync.kind === 'ok' ? 'check-circle' : sync.kind === 'waiting' ? 'clock' : 'alert-circle'} iconKind={sync.kind === 'attention' ? 'red' : sync.kind === 'waiting' ? 'amber' : undefined} title={`Sync: ${sync.label}`} sub={sync.detail} onPress={() => router.push('/next')} />
         <Row icon="clock" title="History & documents" sub="Your dose history and past changes" onPress={() => router.push('/history')} last={!sharingConfigured} />
         {sharingConfigured ? (
           <Row icon="user" title="Account" sub={session ? session.user.email ?? 'Signed in' : 'Sign in to share with caregivers'} onPress={() => router.push('/account')} last />
@@ -112,6 +118,7 @@ export default function Profile() {
       </Card>
 
       <Card style={{ paddingVertical: 8 }}>
+        <Row icon="star" title="What’s next for MedOra" sub="Our roadmap: caregiver view, pictures, audio, offline" onPress={() => router.push('/next')} />
         <Row icon="info" title="About MedOra & privacy" sub="What is real, what is planned, where data goes" onPress={() => router.push('/about')} />
         <Row icon="refresh-ccw" iconKind="red" title={demo ? 'Leave the sample' : 'Start over'} sub={demo ? 'Set up your own medicines' : 'Erase everything on this phone'} onPress={startOver} last />
       </Card>

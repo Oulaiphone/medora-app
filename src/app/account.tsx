@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { BackBar, Btn, Callout, Card, Field, Over, Screen, Segmented, T, toast } from '@/components/ui';
 import { useStore } from '@/lib/store';
 import { sharingConfigured, useSession } from '@/lib/supabase';
-import { afterSignIn, createCircle, signIn, signOut, signUp } from '@/lib/sync';
+import { afterSignIn, createCircle, restoreFromCloud, signIn, signOut, signUp } from '@/lib/sync';
 import { C } from '@/lib/theme';
 
 export default function Account() {
@@ -73,15 +73,32 @@ export default function Account() {
               <Callout icon="info">You’re exploring sample data. To share your own routine, go to Profile → Leave the sample. You can still join someone else’s care circle.</Callout>
             ) : sharing.circleId ? (
               <Card style={{ gap: 8 }}>
-                <Over>Your care circle</Over>
+                <Over>Backed up · your care circle</Over>
                 <T size={28} w="b" color={C.deep} style={{ letterSpacing: 6 }} selectable>{sharing.inviteCode}</T>
                 <T size={13.5} color={C.muted}>Send this code to the people you want in your care team.</T>
                 <Btn title="Go to Care Team" kind="soft" onPress={() => router.navigate('/care')} />
+                <Btn
+                  title="Restore my schedule on this phone"
+                  kind="ghost"
+                  icon="refresh-ccw"
+                  loading={busy}
+                  onPress={async () => {
+                    setBusy(true);
+                    try {
+                      const n = await restoreFromCloud();
+                      toast(n ? `Restored ${n} medicine${n === 1 ? '' : 's'}.` : 'Nothing to restore yet.');
+                    } catch (e) {
+                      setMsg(e instanceof Error ? e.message : 'Could not restore.');
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                />
               </Card>
             ) : (
               <Card style={{ gap: 10 }}>
                 <T size={17} w="sb">Create your care circle</T>
-                <T size={14} color={C.soft}>Your medicines and dose history are copied to your private circle. Only people you invite can see them, and only with the permissions you set.</T>
+                <T size={14} color={C.soft}>Your medicines and dose history are copied to your private circle. Only people you invite can see them, and only with the permissions you set. It also backs up your schedule: if you replace or lose your phone, sign in on the new one and everything comes back.</T>
                 <Btn title="Create my care circle" icon="users" loading={busy} onPress={() => void circle()} />
               </Card>
             )}

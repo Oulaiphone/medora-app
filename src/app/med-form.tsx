@@ -87,7 +87,7 @@ export default function MedForm() {
       return;
     }
     const med = addMed(
-      { ...fields, started: dateKey(), refillDays: 7, document: draft?.document },
+      { ...fields, started: dateKey(), refillDays: 7, document: draft?.document, photo: draft?.photo },
       draft ? `Medicine added from a ${draft.document.startsWith('Sample') ? 'sample label' : 'scanned label'}` : 'Medicine added',
     );
     setScanDraft(null);

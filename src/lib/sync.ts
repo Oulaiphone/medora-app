@@ -5,7 +5,7 @@ import { addDays, dateKey } from './dates';
 import { inviteCode, uid } from './id';
 import { activityRow, doseRow, medRow, publicProfile, useStore } from './store';
 import { currentUserId, supabase } from './supabase';
-import type { Activity, DoseLog, DoseStatus, Medication, Member, Perms } from './types';
+import type { Activity, DoseLog, DoseStatus, Medication, Member, Perms, Profile } from './types';
 
 // ---------------- row <-> app mapping ----------------
 type DoseRowT = { id: string; med_id: string; date: string; time: string; status: DoseStatus; reason: string | null; by_name: string; by_user: string | null; at: string };
@@ -70,8 +70,44 @@ export async function afterSignIn() {
   if (!me) return;
   const st = useStore.getState();
   const { data: own } = await supabase.from('circles').select('id, invite_code').eq('owner', me).limit(1);
-  if (own && own[0]) st.setSharing({ circleId: own[0].id, inviteCode: own[0].invite_code });
+  if (own && own[0]) {
+    st.setSharing({ circleId: own[0].id, inviteCode: own[0].invite_code, lastError: undefined });
+    // new or reset phone: bring the schedule back from the account
+    if (st.settings.mode === 'personal' && useStore.getState().meds.length === 0) await restoreFromCloud();
+  }
   await refreshCaring();
+}
+
+/** Copies the medicines, recent doses and profile saved in the account back onto this phone. */
+export async function restoreFromCloud(): Promise<number> {
+  if (!supabase) return 0;
+  const cid = useStore.getState().sharing.circleId;
+  if (!cid) return 0;
+  // never overwrite changes that have not reached the account yet
+  if (useStore.getState().sharing.outbox.length && (await flush()) > 0) {
+    throw new Error('Some changes on this phone have not synced yet. Connect to the internet and try again.');
+  }
+  const since = dateKey(addDays(new Date(), -60));
+  const [circle, meds, doses] = await Promise.all([
+    supabase.from('circles').select('patient_name, profile').eq('id', cid).maybeSingle(),
+    supabase.from('medications').select('data').eq('circle_id', cid),
+    supabase.from('dose_events').select('*').eq('circle_id', cid).gte('date', since),
+  ]);
+  if (meds.error) throw friendly(meds.error);
+  const list = ((meds.data ?? []) as { data: Medication }[]).map((r) => r.data).filter(Boolean);
+  const prof = (circle.data?.profile ?? {}) as Partial<CaringView['profile']> & { name?: string; providers?: Profile['providers'] };
+  useStore.getState().restore({
+    meds: list,
+    doses: ((doses.data ?? []) as DoseRowT[]).map(toDose),
+    profile: {
+      name: prof.name || (circle.data?.patient_name as string | undefined) || undefined,
+      allergies: prof.allergies,
+      emergency: prof.emergency,
+      pharmacy: prof.pharmacy,
+      providers: prof.providers,
+    },
+  });
+  return list.length;
 }
 
 // ---------------- the patient's own circle ----------------
@@ -116,8 +152,12 @@ export async function flush(): Promise<number> {
   if (!circleId || !outbox.length) return outbox.length;
   const net = await NetInfo.fetch();
   if (net.isConnected === false) return outbox.length;
-  if (!(await currentUserId())) return outbox.length;
+  if (!(await currentUserId())) {
+    st.setSharing({ lastError: 'Sign in again to keep your schedule backed up.' });
+    return outbox.length;
+  }
   flushing = true;
+  let failed: string | undefined;
   try {
     // keep order, but batch consecutive items for the same table + operation
     let i = 0;
@@ -141,11 +181,12 @@ export async function flush(): Promise<number> {
         const permanent = /^(22|23|42)/.test(error.code ?? '');
         if (!permanent) break; // network or server trouble: try again later
         console.warn('Dropping a change the server rejected:', error.message);
+        failed = `Some changes could not be saved to your account (${error.message}).`;
       }
       useStore.getState().dequeue(batch.map((b) => b.id));
       i = j;
     }
-    useStore.getState().setSharing({ lastSync: new Date().toISOString() });
+    useStore.getState().setSharing({ lastSync: new Date().toISOString(), lastError: failed });
   } finally {
     flushing = false;
   }

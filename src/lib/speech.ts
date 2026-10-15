@@ -36,7 +36,8 @@ export function reminderScript(med: Medication, time: string, lang: Lang, name?:
 
 export function speak(text: string, lang: Lang, onDone?: () => void) {
   Speech.stop();
-  Speech.speak(text, { language: lang, rate: 0.92, onDone, onStopped: onDone, onError: onDone });
+  // A separate audio session lets iOS play speech even when the app's own audio session is muted.
+  Speech.speak(text, { language: lang, rate: 0.92, useApplicationAudioSession: false, onDone, onStopped: onDone, onError: onDone });
 }
 
 export function stopSpeaking() {

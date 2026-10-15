@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Chip, T } from '@/components/ui';
 import { shortDate, dateKey } from '@/lib/dates';
 import { readLabel, usingDemoOcrKey } from '@/lib/ocr';
+import { makeThumb } from '@/lib/photo';
 import { parseLabel, SAMPLE_LABEL_TEXT } from '@/lib/parseLabel';
 import { allergyMatches } from '@/lib/safety';
 import { useStore } from '@/lib/store';
@@ -35,7 +36,7 @@ export default function Scan() {
     return () => loop.stop();
   }, [busy, sweep]);
 
-  const finish = (text: string, source: string) => {
+  const finish = (text: string, source: string, photo?: string) => {
     const p = parseLabel(text);
     const warnings: string[] = [];
     const hits = allergyMatches(p.name, allergies);
@@ -57,6 +58,7 @@ export default function Scan() {
       document: `${source} · ${shortDate(dateKey())}`,
       rawText: text,
       warnings,
+      photo,
     };
     setScanDraft(draft);
     router.push({ pathname: '/med-form', params: { from: 'scan' } });
@@ -67,8 +69,8 @@ export default function Scan() {
     setError(null);
     setBusy(true);
     try {
-      const text = await readLabel(uri);
-      finish(text, 'Scanned label');
+      const [text, photo] = await Promise.all([readLabel(uri), makeThumb(uri)]);
+      finish(text, 'Scanned label', photo);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
     } finally {

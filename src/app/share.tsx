@@ -4,6 +4,7 @@ import { Share, View } from 'react-native';
 
 import { BackBar, Btn, Callout, Card, Choice, Row, Screen, T, Toggle, toast } from '@/components/ui';
 import { shareSummaryPdf, summaryHtml, summaryText } from '@/lib/pdf';
+import { printPlan, sharePlanPdf } from '@/lib/printPlan';
 import { useStore } from '@/lib/store';
 import { C } from '@/lib/theme';
 
@@ -66,6 +67,17 @@ export default function ShareSummary() {
       <Callout>MedOra makes a PDF on this phone. You choose how to send it, by email, message or AirDrop, from the share menu.</Callout>
       <Btn title="Create PDF summary" icon="file-text" size="xl" block loading={busy} onPress={() => void pdf()} />
       <Btn title="Share as a text message" kind="ghost" icon="message-circle" block onPress={() => void text()} />
+
+      <Card tint style={{ gap: 10, marginTop: 8 }}>
+        <T size={18} w="sb">Printed backup</T>
+        <T size={14} color={C.soft}>
+          A one-page medication plan with photos, doses, times, instructions, allergies, emergency contacts and the date it was last updated. It also has a cut-out wallet card. Good for the fridge, your wallet and emergency visits.
+        </T>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Btn title="Print" icon="printer" style={{ flex: 1 }} onPress={() => void printPlan(profile, meds).catch(() => toast('Printing is not available.'))} />
+          <Btn title="Save PDF" icon="download" kind="ghost" style={{ flex: 1 }} onPress={() => void sharePlanPdf(profile, meds).catch(() => toast('Could not create the PDF.'))} />
+        </View>
+      </Card>
       <View style={{ height: 30 }} />
     </Screen>
   );

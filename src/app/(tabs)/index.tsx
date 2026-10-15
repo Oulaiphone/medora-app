@@ -249,6 +249,16 @@ export default function Home() {
         </View>
       </Section>
 
+      <Card dark onPress={() => router.push('/next')} label="What’s next for MedOra" style={{ gap: 6 }}>
+        <Over color="#BFE3D4">Coming next</Over>
+        <T size={18} w="sb" color={C.white}>What’s next for MedOra</T>
+        <T size={13.5} color="#D7ECE3">Caregiver view, picture instructions, audio reminders and offline mode.</T>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 4 }}>
+          <T size={14} w="b" color={C.white}>See our roadmap</T>
+          <Feather name="chevron-right" size={16} color={C.white} />
+        </View>
+      </Card>
+
       {activity.length ? (
         <Section title="Recent updates" action={<TextLink title="View history" onPress={() => router.push('/history')} />}>
           <Card style={{ paddingVertical: 4 }}>

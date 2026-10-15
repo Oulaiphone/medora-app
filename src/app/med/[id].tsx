@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,6 +8,7 @@ import { Pictorial, STATUS } from '@/components/meds';
 import { BackBar, Btn, Callout, Card, Chip, Choice, Field, MedBadge, Over, Screen, Sheet, T, toast } from '@/components/ui';
 import { ago, dateKey, label, shortDate } from '@/lib/dates';
 import { dosesFor, refillDue, supplyText, unitWord, type DoseSlot } from '@/lib/schedule';
+import { pickPhoto } from '@/lib/photo';
 import { reminderScript, speak, stopSpeaking } from '@/lib/speech';
 import { useStore } from '@/lib/store';
 import { C } from '@/lib/theme';
@@ -24,6 +26,7 @@ export default function MedDetail() {
   const logDose = useStore((s) => s.logDose);
   const undoDose = useStore((s) => s.undoDose);
   const noteSideEffect = useStore((s) => s.noteSideEffect);
+  const updateMed = useStore((s) => s.updateMed);
 
   const [skipFor, setSkipFor] = useState<DoseSlot | null>(() => {
     // opened from a reminder's Skip button
@@ -54,6 +57,17 @@ export default function MedDetail() {
     );
   }
 
+  const addPhoto = async (from: 'camera' | 'library') => {
+    try {
+      const photo = await pickPhoto(from);
+      if (!photo) return;
+      updateMed(med.id, { photo }, 'Photo updated');
+      toast('Photo saved.');
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not add the photo.');
+    }
+  };
+
   const readAloud = () => {
     if (speaking) {
       stopSpeaking();
@@ -79,7 +93,7 @@ export default function MedDetail() {
         />
       }>
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <MedBadge name={med.name} tone="green" size={58} />
+        {med.photo ? <Image source={{ uri: med.photo }} style={styles.thumb} contentFit="cover" /> : <MedBadge name={med.name} tone="green" size={58} />}
         <View style={{ flex: 1 }}>
           <Over>{med.purpose || 'Active medicine'}</Over>
           <T size={27} w="sb" style={{ letterSpacing: -0.6 }}>{med.name}</T>
@@ -153,6 +167,12 @@ export default function MedDetail() {
             </View>
           </View>
         ) : null}
+        {med.photo ? <Image source={{ uri: med.photo }} style={styles.photo} contentFit="cover" accessibilityLabel={`Photo of ${med.name}`} /> : null}
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Btn title={med.photo ? 'New photo' : 'Add a photo'} icon="camera" kind="soft" size="sm" style={{ flex: 1 }} onPress={() => void addPhoto('camera')} />
+          <Btn title="From photos" icon="image" kind="ghost" size="sm" style={{ flex: 1 }} onPress={() => void addPhoto('library')} />
+        </View>
+        <T size={12.5} color={C.muted}>A photo of the pill or box helps you and your caregivers recognise it. It is also printed on your medication plan.</T>
       </View>
 
       <View style={{ gap: 10 }}>
@@ -236,6 +256,8 @@ function Info({ k, v, warn, last }: { k: string; v: string; warn?: boolean; last
 }
 
 const styles = StyleSheet.create({
+  thumb: { width: 58, height: 58, borderRadius: 16 },
+  photo: { width: '100%', height: 190, borderRadius: 16, backgroundColor: C.line2 },
   speak: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.tint, borderRadius: 99, paddingVertical: 8, paddingHorizontal: 12 },
   tile: { flex: 1, backgroundColor: C.tint, borderRadius: 14, padding: 12, gap: 4 },
   grid: { borderWidth: 1, borderColor: C.line, borderRadius: 16, paddingHorizontal: 14, flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, backgroundColor: C.card },

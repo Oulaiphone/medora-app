@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Btn, Field, Over, T, TopBar } from '@/components/ui';
 import { useStore } from '@/lib/store';
+import { sharingConfigured } from '@/lib/supabase';
 import { C } from '@/lib/theme';
 
 export default function Welcome() {
@@ -82,6 +83,19 @@ export default function Welcome() {
                   router.replace('/');
                 }}
               />
+              {sharingConfigured ? (
+                <Btn
+                  title="New phone? Restore from my account"
+                  kind="soft"
+                  icon="refresh-ccw"
+                  block
+                  onPress={() => {
+                    startPersonal('');
+                    router.replace('/');
+                    router.push('/account');
+                  }}
+                />
+              ) : null}
               <T size={12.5} color={C.muted}>
                 The sample uses fictional information for Margaret Wilson. Your own information stays on this phone unless you turn on sharing.
               </T>

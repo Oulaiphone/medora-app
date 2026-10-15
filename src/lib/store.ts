@@ -48,6 +48,7 @@ interface State {
   removeRemoteDose: (id: string) => void;
   mergeRemoteActivity: (items: Activity[]) => void;
   markHandled: (id: string) => void;
+  restore: (d: { meds: Medication[]; doses: DoseLog[]; profile: Partial<Profile> }) => void;
 }
 
 const defaultSettings: Settings = {
@@ -271,6 +272,17 @@ export const useStore = create<State>()(
             return { activity: [...fresh, ...s.activity].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 300) };
           }),
         markHandled: (id) => set((s) => ({ handled: [id, ...s.handled].slice(0, 50) })),
+        restore: ({ meds, doses, profile }) => {
+          set((s) => ({
+            meds,
+            doses,
+            profile: { ...s.profile, ...Object.fromEntries(Object.entries(profile).filter(([, v]) => v != null && v !== '')) },
+          }));
+          if (meds.length) {
+            const a = { id: uid(), who: get().profile.name || 'You', text: `restored ${meds.length} medicine${meds.length === 1 ? '' : 's'} from your account`, at: now() };
+            set((s) => ({ activity: [a, ...s.activity] }));
+          }
+        },
       };
     },
     {
@@ -289,7 +301,7 @@ export const useStore = create<State>()(
 
 /** What caregivers in the circle can see about the patient */
 export function publicProfile(p: Profile) {
-  return { name: p.name, allergies: p.allergies, emergency: p.emergency, pharmacy: p.pharmacy };
+  return { name: p.name, allergies: p.allergies, emergency: p.emergency, pharmacy: p.pharmacy, providers: p.providers };
 }
 
 export const meName = () => useStore.getState().profile.name || 'You';

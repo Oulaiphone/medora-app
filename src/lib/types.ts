@@ -29,6 +29,7 @@ export interface Medication {
   document?: string; // "Scanned label · 18 Oct"
   remindOffset: 0 | 10 | 30; // minutes before
   personalNote?: string;
+  photo?: string; // small JPEG as a data URI, used on screen and in the printed plan
   tone: Tone;
   active: boolean;
   history: HistoryItem[];
@@ -117,6 +118,7 @@ export interface Sharing {
   inviteCode?: string;
   outbox: OutboxItem[];
   lastSync?: string;
+  lastError?: string;
 }
 
 export interface ScanDraft {
@@ -133,4 +135,5 @@ export interface ScanDraft {
   document: string;
   rawText: string;
   warnings: string[];
+  photo?: string;
 }
