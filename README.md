@@ -47,13 +47,27 @@ Checks: `npm run typecheck` · `npm run lint` · `npm run test:parser`
 
 ## Background
 
-MedOra started as a team project for CE596. Our research and performance map compared Medisafe, Dosecast and the CVS Pharmacy app. They already handle tracking and reminders well, so MedOra aims to stand out on **care coordination**, **accessibility and understanding**, and **data privacy**. The visual design follows the team’s Figma Make prototype.
+MedOra started as our team project in CE596 at Purdue University. Over the semester we took it through a full product development process before building anything:
+
+1. **Opportunity space**: finding where medication management fails for older adults and their families.
+2. **Purpose-context mapping**: understanding when, where and why people take, track and share medicines.
+3. **Demand estimate**: sizing how many people face this problem.
+4. **Ecosystem and competitive analysis**: mapping patients, caregivers, providers and pharmacies, and studying Medisafe, Dosecast and the CVS Pharmacy app.
+5. **Performance map**: deciding where MedOra must be the best (care coordination, accessibility and understanding, data privacy) and where good enough is enough (reminders, health monitoring).
+6. **Solution prototype**: a clickable prototype in Figma Make, presented in class.
+
+This repository is the next step: a working app built from that research and prototype.
 
 **Team:** Sriya, Kai, Sneha, Oulaiphone
 
-### My role
-<!-- Edit this so it describes exactly what you did. -->
-I worked on [research / the performance map / …], presented the product roadmap, and turned the team’s clickable prototype into this working app, using Claude (an AI assistant) as a coding partner.
+### Contributions
+
+All four team members contributed to the research stages and the clickable prototype. My contributions:
+
+- **Research and analysis:** co-developed the opportunity space, purpose-context map, demand estimate, and ecosystem and competitive analysis.
+- **Performance map:** [led] the comparison of MedOra with Medisafe, Dosecast and the CVS Pharmacy app across six hiring criteria, and set the design targets that guided the app: where MedOra must lead (care coordination, accessibility, data privacy) and where good enough is enough.
+- **Presentation:** presented the product roadmap in the solution prototype review.
+- **Software:** turned the prototype into a working mobile app (Expo, React Native, Supabase) with AI-assisted coding (Claude). I defined the scope and requirements from our research: reliable reminders, verified label scanning, and caregiver sharing under patient control.
 
 ## Limitations and next steps
 
